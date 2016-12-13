@@ -1,4 +1,4 @@
-name := """example-client"""
+name := """sample-service"""
 
 version := "1.0-SNAPSHOT"
 
