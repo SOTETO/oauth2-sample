@@ -7,6 +7,7 @@ import play.api._
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.libs.ws._
+import play.api.Configuration
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -15,7 +16,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
  * application's home page.
  */
 @Singleton
-class HomeController @Inject() (ws: WSClient) extends Controller {
+class HomeController @Inject() (ws: WSClient,conf : Configuration) extends Controller {
 
   /**
    * Create an Action to render an HTML page with a welcome message.
@@ -28,14 +29,20 @@ class HomeController @Inject() (ws: WSClient) extends Controller {
   }
 
   def login = Action {
-    Redirect("http://localhost:9000/oauth2/code/get/Test/Test")
+    val url = conf.getString("drops.url.base").get + conf.getString("drops.url.code").get +
+      conf.getString("drops.client_id").get + "/" + conf.getString("drops.client_secret").get
+    Redirect(url)
   }
 
   def receiveCode(code: String) = Action.async {
-    val accessToken = ws.url("http://localhost:9000/oauth2/access_token").withQueryString(
+    val url = conf.getString("drops.url.base").get + conf.getString("drops.url.accessToken").get
+    val clientId = conf.getString("drops.client_id").get
+    val clientSecret = conf.getString("drops.client_secret").get
+
+    val accessToken = ws.url(url).withQueryString(
       "grant_type" -> "authorization_code",
-      "client_id" -> "Test",
-      "client_secret" -> "Test",
+      "client_id" -> clientId,
+      "client_secret" -> clientSecret,
       "code" -> code
     ).get().map(response => response.status match {
       case 200 => AccessToken(response.json)
@@ -43,8 +50,9 @@ class HomeController @Inject() (ws: WSClient) extends Controller {
     })
 
     accessToken.flatMap(token => {
-      println(token.content)
-      ws.url("http://localhost:9000/oauth2/rest/profile").withQueryString(
+      val url = conf.getString("drops.url.base").get + conf.getString("drops.url.profile").get
+
+      ws.url(url).withQueryString(
         "access_token" -> token.content
       ).get().map(response => response.status match {
         case 200 => Ok(Json.obj("status" -> "success", "code" -> code, "token" -> token.content, "user" -> response.json))
