@@ -30,23 +30,23 @@ class HomeController @Inject() (ws: WSClient,conf : Configuration) extends Contr
 
   def login = Action {
     val url = conf.getString("drops.url.base").get + conf.getString("drops.url.code").get +
-      conf.getString("drops.client_id").get + "/" + conf.getString("drops.client_secret").get
+      conf.getString("drops.client_id").get //+ "/" + conf.getString("drops.client_secret").get
     Redirect(url)
   }
 
   def receiveCode(code: String) = Action.async {
     val url = conf.getString("drops.url.base").get + conf.getString("drops.url.accessToken").get
     val clientId = conf.getString("drops.client_id").get
-    val clientSecret = conf.getString("drops.client_secret").get
+//    val clientSecret = conf.getString("drops.client_secret").get
 
     val accessToken = ws.url(url).withQueryString(
       "grant_type" -> "authorization_code",
       "client_id" -> clientId,
-      "client_secret" -> clientSecret,
+//      "client_secret" -> clientSecret,
       "code" -> code
     ).get().map(response => response.status match {
       case 200 => AccessToken(response.json)
-      case _ => throw new Exception // Todo: throw meaningful exception considering the returned error message and status code!
+      case _ => println(response.status);throw new Exception // Todo: throw meaningful exception considering the returned error message and status code!
     })
 
     accessToken.flatMap(token => {
