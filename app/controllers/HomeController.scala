@@ -43,7 +43,8 @@ class HomeController @Inject() (ws: WSClient,conf : Configuration) extends Contr
       "grant_type" -> "authorization_code",
       "client_id" -> clientId,
 //      "client_secret" -> clientSecret,
-      "code" -> code
+      "code" -> code,
+      "redirect_uri" -> "http://localhost:8000/endpoint?code="
     ).get().map(response => response.status match {
       case 200 => AccessToken(response.json)
       case _ => println(response.status);throw new Exception // Todo: throw meaningful exception considering the returned error message and status code!
